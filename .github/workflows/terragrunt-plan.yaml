@@ -1,0 +1,54 @@
+name: Terragrunt Check and Plan
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - terraform/**
+  workflow_dispatch:
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.filter.outputs.modules }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find modules with code changes
+        id: filter
+        uses: ./.github/actions/check-code-changes
+
+  plan:
+    runs-on: ubuntu-latest
+    needs: [ changes ]
+    if: ${{ needs.changes.outputs.modules != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [ 
+          {stage: sandbox, account: 900195245456},
+          {stage: staging, account: 626794353417},
+          {stage: production, account: 146210539210},
+        ]
+        modules: ${{ fromJSON(needs.changes.outputs.modules) }}
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Terragrunt Plan
+        uses: Measurabl/terragrunt-action@1.0.1
+        with:
+          github_token: ${{ secrets.MSR_GITHUB_TOKEN }}
+          tg_dir: terraform/environments/${{ matrix.environment.stage }}/us-west-2/${{ matrix.modules }}
+          tg_command: run-all plan
+          tg_comment_on_pr: true
+          aws_region: us-west-2
+          # TODO: Update the role ARN to match the GitHub OIDC role you previously created
+          aws_role_arn: arn:aws:iam::${{ matrix.environment.account }}:role/tg-adv-<INSERT_YOUR_NAME>-${{ matrix.environment.stage }}-gh-oidc
+          tf_version: ${{ vars.TF_VERSION }}
+          tg_version: ${{ vars.TG_VERSION }}
+          run_checks: false

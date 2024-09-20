@@ -1,0 +1,28 @@
+---
+name: Detect code changes
+description: Check each module to find ones that have code changes
+
+outputs:
+  modules: 
+    description: "Terraform modules with file changes"
+    value: ${{ steps.expose.outputs.modules }}
+
+runs:
+  using: composite
+  steps:
+    - name: Git clone the repository
+      uses: actions/checkout@v4
+
+    # For pull requests it's not necessary to checkout the code
+    - uses: dorny/paths-filter@v3
+      id: filter
+      # TODO: Uncomment out the filters below
+      # with:
+        # filters: |
+        #   gh-iam-oidc: terraform/**/gh-iam-oidc/**
+        #   s3: terraform/**/s3/**
+
+    - name: Expose changes as output
+      id: expose
+      run: echo "modules=${{ toJSON(steps.filter.outputs.changes) }}" >> $GITHUB_OUTPUT 
+      shell: bash
