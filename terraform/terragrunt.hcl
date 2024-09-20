@@ -20,8 +20,8 @@ locals {
   #####################
   # TODO: Update these
   #####################
-  user_name = "<INSERT_NAME>"
-  domain    = "<INSERT_DOMAIN_NAME>"
+  user_name = "skruger"
+  domain    = "unified-experience"
 }
 
 generate "provider" {

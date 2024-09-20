@@ -8,5 +8,5 @@ include "config" {
 
 inputs = {
   # TODO: Update this
-  bucket_name = "<INSERT_BUCKET_NAME>"
+  bucket_name = "udp-tutorial"
 }
